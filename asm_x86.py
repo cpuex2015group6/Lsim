@@ -59,7 +59,7 @@ def convert_op3(inst,instno,reg1,reg2,reg3):
         return "movl ({1:d}*4+_regs), %ecx; movl ({2:d}*4+_regs), %eax; shll $2, %eax; movl $inst_{3:03X}, %ebx; shrl $2, %ebx; movl %ebx, ({4:d}*4+_regs); cmpl ${0:d}, %ecx; {5} tmp_label_{6:d}; jmp inst_{3:03X}; .align 4; tmp_label_{6:d}: jmp *%eax;".format(0, reg2, reg3, instno+1, reg1, "je", instno)
     elif inst=="jrlte":
         return "movl ({1:d}*4+_regs), %ecx; movl ({2:d}*4+_regs), %eax; shll $2, %eax; movl $inst_{3:03X}, %ebx; shrl $2, %ebx; movl %ebx, ({4:d}*4+_regs); cmpl ${0:d}, %ecx; {5} tmp_label_{6:d}; jmp inst_{3:03X}; .align 4; tmp_label_{6:d}: jmp *%eax;".format(2, reg2, reg3, instno+1, reg1, "jne", instno)
-    elif inst in {"fadd","fmul","fdiv"}:
+    elif inst in {"fadd","fmul","finv"}:
         return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; {2}; movl %eax, ({3:d}*4+_regs);".format(reg2, reg3, call("_"+inst), reg1)
     elif inst=="fsqrt":
         return "movl ({0:d}*4+_regs), %eax; {1}; movl %eax, ({2:d}*4+_regs);".format(reg2, call("_"+inst), reg1)

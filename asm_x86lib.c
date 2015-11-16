@@ -54,11 +54,10 @@ uint32_t fmul(uint32_t a, uint32_t b) {
   return rt.i;
 }
 
-uint32_t fdiv(uint32_t a, uint32_t b) {
-  Float ra, rb, rt;
+uint32_t finv(uint32_t a, uint32_t b) {
+  Float ra, rt;
   ra.i = a;
-  rb.i = b;
-  rt.f = ra.f / rb.f;
+  rt.f = 1.0 / ra.f;
   return rt.i;
 }
 
@@ -107,7 +106,7 @@ int main() {
     return EXIT_FAILURE;
   }
   regs[3] = ((uint32_t)malloc(1*1024*1024))/4;
-  regs[4] = ((uint32_t)malloc(3*1024*1024))/4;
+  regs[4] = ((uint32_t)malloc(2*1024*1024))/4;
   regs[255] = 0;
   min_caml_entry();
   printf("limm_count:%f\n",limm_count/100000000.0);
