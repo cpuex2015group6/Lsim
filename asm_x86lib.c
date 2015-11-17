@@ -33,6 +33,16 @@ void debug(int a) {
   }
 }
 
+void show(int a) {
+  static int i = 0;
+  printf("%d reg: %d\n",i, a);
+  fflush(stdout);
+  i++;
+  if (i ==2000) {
+    while(1){}
+  }
+}
+
 typedef union {
   uint32_t i;
   float f;
@@ -105,7 +115,7 @@ int main() {
     fprintf(stderr, "%sのオープンに失敗しました。\n", "stdout");
     return EXIT_FAILURE;
   }
-  regs[3] = ((uint32_t)malloc(1*1024*1024))/4;
+  regs[3] = ((uint32_t)malloc(2*1024*1024))/4;
   regs[4] = ((uint32_t)malloc(2*1024*1024))/4;
   regs[255] = 0;
   min_caml_entry();

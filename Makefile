@@ -1,7 +1,7 @@
 CC=gcc
-CFLAGS=-Wall -O2 -m32
-ASFLAGS=-m32
-LDFLAGS=-pthread -lm -m32 -Wl,-no_pie
+CFLAGS=-Wall -O2 -m32 -g0
+ASFLAGS=-m32 -g0
+LDFLAGS=-pthread -lm -m32 -Wl,-no_pie -g0
 X86_OBJS=asm_x86lib.o asm_x86.o
 X86_TARGET = native
 

@@ -7,7 +7,7 @@ import math
 
 ignore={".text",".globl",".align",".data",".literal8"}
 nowrite=ignore
-onereg={"limm","j","in","out","hlt"}
+onereg={"limm","j","in","out","hlt","show"}
 
 # 2引数まで対応
 def call(func):
@@ -27,6 +27,8 @@ def convert_op1(inst,instno,reg,imm):
         return "movl ({0:d}*4+_regs), %eax; {1};".format(reg,call("_out"))
     elif inst=="hlt":
         return "popl %ebp; ret;"
+    elif inst=="show":
+        return "movl ({0:d}*4+_regs), %eax; {1};".format(reg,call("_show"))
     else:
         return ""
 
