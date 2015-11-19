@@ -37,6 +37,11 @@ void show(int a) {
   i++;
 }
 
+void trace(int a) {
+  printf("eip: 0x%x\n", a);
+  fflush(stdout);
+}
+
 typedef union {
   uint32_t i;
   float f;
@@ -103,7 +108,7 @@ int main() {
     return EXIT_FAILURE;
   }
   // メモリ空間(SRAM)は4MB
-  mem_offset[0] = malloc(8*1024*1024);
+  mem_offset[0] = malloc(4*1024*1024);
   printf("registers    : 0x%x\n", (uint32_t)regs);
   printf("memory space : 0x%x\n", (uint32_t)(mem_offset[0]));
   fflush(stdout);

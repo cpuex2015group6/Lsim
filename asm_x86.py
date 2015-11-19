@@ -9,35 +9,28 @@ ignore={".text",".globl",".align",".data",".literal8"}
 nowrite=ignore
 onereg={"limm","j","in","out","hlt","show"}
 
-# 2引数まで対応
-def call(func):
-    return "subl $24, %esp; movl %ebx, 4(%esp); movl %eax, (%esp); call {0}; addl $24, %esp".format(func)
-
-def incq(var):
-    return "movl ${0}, %eax; movl (%eax), %ecx; addl $1, %ecx; adcl $0, 4(%eax); movl %ecx, (%eax)".format(var)
-
 def convert_op1(inst,instno,reg,imm):
     if inst=="limm":
         if isinstance(imm,int):
-            return "\t\t{2};movl ${0:d}, ({1:d}*4+_regs);".format(imm, reg, incq("_limm_count"))
+            return "INCQ({2});movl ${0:d}, ({1:d}*4+_regs);".format(imm, reg, "_limm_count")
         else:
-            return "\t\t{2};movl ${0}, %eax; movl %eax, ({1:d}*4+_regs);".format(imm, reg, incq("_limm_count"))
+            return "INCQ({2});movl ${0}, %eax; movl %eax, ({1:d}*4+_regs);".format(imm, reg, "_limm_count")
     elif inst=="j":
         return "movl $inst_{0:03X}, %eax; movl %eax, ({1:d}*4+_regs); jmp inst_{2:03X};".format(instno+1, reg, instno+int(imm,0))
     elif inst=="in":
-        return "{0}; movl %eax, ({1:d}*4+_regs);".format(call("_in"),reg)
+        return "CALL({0}); movl %eax, ({1:d}*4+_regs);".format("_in",reg)
     elif inst=="out":
-        return "movl ({0:d}*4+_regs), %eax; {1};".format(reg,call("_out"))
+        return "movl ({0:d}*4+_regs), %eax; CALL({1});".format(reg,"_out")
     elif inst=="hlt":
         return "popl %ebp; ret;"
     elif inst=="show":
-        return "movl ({0:d}*4+_regs), %eax; {1};".format(reg,call("_show"))
+        return "movl ({0:d}*4+_regs), %eax; CALL({1});".format(reg,"_show")
     else:
         return ""
 
 def convert_op3(inst,instno,reg1,reg2,reg3):
     if inst=="cmp":
-        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; {2}; movl %eax, ({3:d}*4+_regs);".format(reg2, reg3, call("_cmp"), reg1)
+        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; CALL({2}); movl %eax, ({3:d}*4+_regs);".format(reg2, reg3, "_cmp", reg1)
     elif inst=="jr":
         return "movl ({0:d}*4+_regs), %eax; movl $inst_{1:03X}, %ebx; movl %ebx, ({2:d}*4+_regs); jmp *%eax;".format(reg2, instno+1, reg1)
     elif inst=="stw":
@@ -53,23 +46,23 @@ def convert_op3(inst,instno,reg1,reg2,reg3):
     elif inst=="srl":
         return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ecx; cmpl $32, %ecx; jl tmp_label_{2:d}; movl $0, %eax; tmp_label_{2:d}: shrl %cl, %eax; movl %eax, ({3:d}*4+_regs)".format(reg2, reg3, instno, reg1)
     elif inst=="jreq":
-        return "movl ({1:d}*4+_regs), %ecx; movl ({2:d}*4+_regs), %eax; movl $inst_{3:03X}, %ebx; movl %ebx, ({4:d}*4+_regs); cmpl ${0:d}, %ecx; {5} tmp_label_{6:d}; jmp inst_{3:03X}; .align 4; tmp_label_{6:d}: jmp *%eax;".format(1, reg2, reg3, instno+1, reg1, "je", instno)
+        return "movl ({1:d}*4+_regs), %ecx; movl ({2:d}*4+_regs), %eax; movl $inst_{3:03X}, %ebx; movl %ebx, ({4:d}*4+_regs); cmpl ${0:d}, %ecx; {5} tmp_label_{6:d}; jmp inst_{3:03X}; tmp_label_{6:d}: jmp *%eax;".format(1, reg2, reg3, instno+1, reg1, "je", instno)
     elif inst=="jrneq":
-        return "movl ({1:d}*4+_regs), %ecx; movl ({2:d}*4+_regs), %eax; movl $inst_{3:03X}, %ebx; movl %ebx, ({4:d}*4+_regs); cmpl ${0:d}, %ecx; {5} tmp_label_{6:d}; jmp inst_{3:03X}; .align 4; tmp_label_{6:d}: jmp *%eax;".format(1, reg2, reg3, instno+1, reg1, "jne", instno)
+        return "movl ({1:d}*4+_regs), %ecx; movl ({2:d}*4+_regs), %eax; movl $inst_{3:03X}, %ebx; movl %ebx, ({4:d}*4+_regs); cmpl ${0:d}, %ecx; {5} tmp_label_{6:d}; jmp inst_{3:03X}; tmp_label_{6:d}: jmp *%eax;".format(1, reg2, reg3, instno+1, reg1, "jne", instno)
     elif inst=="jrgt":
-        return "movl ({1:d}*4+_regs), %ecx; movl ({2:d}*4+_regs), %eax; movl $inst_{3:03X}, %ebx; movl %ebx, ({4:d}*4+_regs); cmpl ${0:d}, %ecx; {5} tmp_label_{6:d}; jmp inst_{3:03X}; .align 4; tmp_label_{6:d}: jmp *%eax;".format(2, reg2, reg3, instno+1, reg1, "je", instno)
+        return "movl ({1:d}*4+_regs), %ecx; movl ({2:d}*4+_regs), %eax; movl $inst_{3:03X}, %ebx; movl %ebx, ({4:d}*4+_regs); cmpl ${0:d}, %ecx; {5} tmp_label_{6:d}; jmp inst_{3:03X}; tmp_label_{6:d}: jmp *%eax;".format(2, reg2, reg3, instno+1, reg1, "je", instno)
     elif inst=="jrgte":
-        return "movl ({1:d}*4+_regs), %ecx; movl ({2:d}*4+_regs), %eax; movl $inst_{3:03X}, %ebx; movl %ebx, ({4:d}*4+_regs); cmpl ${0:d}, %ecx; {5} tmp_label_{6:d}; jmp inst_{3:03X}; .align 4; tmp_label_{6:d}: jmp *%eax;".format(0, reg2, reg3, instno+1, reg1, "jne", instno)
+        return "movl ({1:d}*4+_regs), %ecx; movl ({2:d}*4+_regs), %eax; movl $inst_{3:03X}, %ebx; movl %ebx, ({4:d}*4+_regs); cmpl ${0:d}, %ecx; {5} tmp_label_{6:d}; jmp inst_{3:03X}; tmp_label_{6:d}: jmp *%eax;".format(0, reg2, reg3, instno+1, reg1, "jne", instno)
     elif inst=="jrlt":
-        return "movl ({1:d}*4+_regs), %ecx; movl ({2:d}*4+_regs), %eax; movl $inst_{3:03X}, %ebx; movl %ebx, ({4:d}*4+_regs); cmpl ${0:d}, %ecx; {5} tmp_label_{6:d}; jmp inst_{3:03X}; .align 4; tmp_label_{6:d}: jmp *%eax;".format(0, reg2, reg3, instno+1, reg1, "je", instno)
+        return "movl ({1:d}*4+_regs), %ecx; movl ({2:d}*4+_regs), %eax; movl $inst_{3:03X}, %ebx; movl %ebx, ({4:d}*4+_regs); cmpl ${0:d}, %ecx; {5} tmp_label_{6:d}; jmp inst_{3:03X}; tmp_label_{6:d}: jmp *%eax;".format(0, reg2, reg3, instno+1, reg1, "je", instno)
     elif inst=="jrlte":
-        return "movl ({1:d}*4+_regs), %ecx; movl ({2:d}*4+_regs), %eax; movl $inst_{3:03X}, %ebx; movl %ebx, ({4:d}*4+_regs); cmpl ${0:d}, %ecx; {5} tmp_label_{6:d}; jmp inst_{3:03X}; .align 4; tmp_label_{6:d}: jmp *%eax;".format(2, reg2, reg3, instno+1, reg1, "jne", instno)
+        return "movl ({1:d}*4+_regs), %ecx; movl ({2:d}*4+_regs), %eax; movl $inst_{3:03X}, %ebx; movl %ebx, ({4:d}*4+_regs); cmpl ${0:d}, %ecx; {5} tmp_label_{6:d}; jmp inst_{3:03X}; tmp_label_{6:d}: jmp *%eax;".format(2, reg2, reg3, instno+1, reg1, "jne", instno)
     elif inst in {"fadd","fmul","finv"}:
-        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; {2}; movl %eax, ({3:d}*4+_regs);".format(reg2, reg3, call("_"+inst), reg1)
+        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; CALL({2}); movl %eax, ({3:d}*4+_regs);".format(reg2, reg3, "_"+inst, reg1)
     elif inst=="fsqrt":
-        return "movl ({0:d}*4+_regs), %eax; {1}; movl %eax, ({2:d}*4+_regs);".format(reg2, call("_"+inst), reg1)
+        return "movl ({0:d}*4+_regs), %eax; CALL({1}); movl %eax, ({2:d}*4+_regs);".format(reg2, "_"+inst, reg1)
     elif inst in "fcmpl":
-        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; {2}; movl %eax, ({3:d}*4+_regs);".format(reg2, reg3, call("_"+inst), reg1)
+        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; CALL({2}); movl %eax, ({3:d}*4+_regs);".format(reg2, reg3, "_"+inst, reg1)
     return ""
 
 def get_labels(program):
@@ -131,7 +124,7 @@ def fimm(s):
         print("{} is not a float".format(s))
         exit(1)
 
-def write_data(fp,fp_comment,program,program_org,labels,count_flag):
+def write_data(fp,fp_comment,program,program_org,labels):
     datano=0
     for line,inst in enumerate(program):
         #print line
@@ -149,7 +142,7 @@ def write_data(fp,fp_comment,program,program_org,labels,count_flag):
 def write_binary(fp,fp_comment,program,program_org,labels,count_flag):
     instno=0
     if count_flag:
-        count_asm="\t\t{0};\n".format(incq("_exec_count"))
+        count_asm="\t\tINCQ({0});\n".format("_exec_count")
     else:
         count_asm=""
     for line,inst in enumerate(program):
@@ -161,7 +154,8 @@ def write_binary(fp,fp_comment,program,program_org,labels,count_flag):
         elif inst[0] in ignore:
             pass
         elif inst[0] in labels:
-            fp.write(".align 4;\t{0}\n".format(inst[0]))
+            fp.write("\t{0}\n".format(inst[0]))
+            #fp.write("\t\tcall get_eip; CALL({1});\n".format(reg,"_trace"))
         elif inst[0]==".long":#long
             pass
         elif inst[0] in onereg:#one reg operation
@@ -232,11 +226,12 @@ def main():
     file_out.write(".global _min_caml_entry\n")
     file_out.write("_min_caml_entry:\n")
     file_out.write("\t\tpushl %ebp; movl %esp, %ebp;\n")
-    write_data(file_out,file_comment,program,program_org,labels,True)
+    write_data(file_out,file_comment,program,program_org,labels)
     file_out.write("\t\tjmp _min_caml_init;\n")
     write_binary(file_out,file_comment,program,program_org,labels,True)
     file_out.write("\t\tpopl %ebp;\n")
     file_out.write("\t\tret;\n")
+    file_out.write("\t\tget_eip: movl (%esp), %eax; ret;\n")
     
     print("Assembling succeeded.")
     print("Dumped '{}' ({} instructions).".format(file_out_name,instnum))
