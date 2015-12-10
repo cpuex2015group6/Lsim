@@ -7,7 +7,11 @@ import math
 
 ignore={".text",".globl",".align",".data",".literal8"}
 nowrite=ignore
-onereg={"limm","j","in","out","hlt","show"}
+onereg={"limm","j","in","out","hlt","show","count","showexec","setcurexec","getexecdiff"}
+twoireg={"stwi","ldwi","jif","addi","subi","slli","srli"}
+twoicreg={"cmpic","jic","fjic"}
+threecreg={"cmpc","fcmpc","jrc","fjrc"}
+fourreg={"fam"}
 
 def convert_op1(inst,instno,reg,imm):
     if inst=="limm":
@@ -25,45 +29,106 @@ def convert_op1(inst,instno,reg,imm):
         return "popl %ebp; ret;"
     elif inst=="show":
         return "movl ({0:d}*4+_regs), %eax; CALL({1});".format(reg,"_show")
+    elif inst=="count":
+        return "INCQ({0});".format("_generic_count")
+    elif inst=="showexec":
+        return "CALL({0});".format("_showexec")
+    elif inst=="setcurexec":
+        return "CALL({0});".format("_setcurexec")
+    elif inst=="getexecdiff":
+        return "CALL({0});".format("_getexecdiff")
     else:
         return ""
 
+def convert_op2i(inst,instno,reg1,reg2,imm):
+    if inst=="stwi":
+        return "STWI({0:d},{1:d},{2:d})".format(reg1, reg2, imm)
+    elif inst=="ldwi":
+        return "LDWI({0:d},{1:d},{2:d})".format(reg1, reg2, imm)
+    elif inst=="addi":
+        return "ADDI({0:d},{1:d},{2:d})".format(reg1, reg2, imm)
+    elif inst=="subi":
+        return "SUBI({0:d},{1:d},{2:d})".format(reg1, reg2, imm)
+    elif inst=="jif":
+        return "JIF({0:d},{1:d},{2},{3:03X},{4:03X})".format(reg1, reg2, imm, instno+1, instno)
+    # 0
+#    elif inst=="slli":
+#        return "SLLI({0:d},{1:d},{2:d},{3:03X})".format(reg1, reg2, imm, instno)
+#    elif inst=="srli":
+#        return "SRLI({0:d},{1:d},{2:d},{3:03X})".format(reg1, reg2, imm, instno)
+    else:
+        return ""
+
+def convert_op2ic(inst,instno,reg1,reg2,imm,condition):
+    if inst=="cmpic":
+        return "movl ({0:d}*4+_regs), %eax; movl ${1:d}, %ebx; movl ${2:d}, %ecx; CALL({3}); movl %eax, ({4:d}*4+_regs);".format(reg2, imm, condition, "_cmpc", reg1)
+    elif inst=="jic":
+        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; movl ${2:d}, %ecx; CALL({3}); JIC({4},{5:03X},{6:03X})".format(reg1, reg2, condition, "_cmpc", imm, instno + 1, instno)
+    elif inst=="fjic":
+        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; movl ${2:d}, %ecx; CALL({3}); JIC({4},{5:03X},{6:03X})".format(reg1, reg2, condition, "_fcmpc", imm, instno + 1, instno)
+    else:
+        return ""
+
+def convert_op3c(inst,instno,reg1,reg2,reg3,condition):
+    if inst=="cmpc":
+        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; movl ${2:d}, %ecx; CALL({3}); movl %eax, ({4:d}*4+_regs);".format(reg2, reg3, condition, "_cmpc", reg1)
+    elif inst=="fcmpc":
+        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; movl ${2:d}, %ecx; CALL({3}); movl %eax, ({4:d}*4+_regs);".format(reg2, reg3, condition, "_fcmpc", reg1)
+    elif inst=="jrc":
+        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; movl ${2:d}, %ecx; CALL({3}); JRC({4:d},{5:03X},{6:03X})".format(reg1, reg2, condition, "_cmpc", reg3, instno + 1, instno)
+    elif inst=="fjrc":
+        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; movl ${2:d}, %ecx; CALL({3}); JRC({4:d},{5:03X},{6:03X})".format(reg1, reg2, condition, "_fcmpc", reg3, instno + 1, instno)
+    else:
+        return ""
+
+    
 def convert_op3(inst,instno,reg1,reg2,reg3):
     if inst=="cmp":
         return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; CALL({2}); movl %eax, ({3:d}*4+_regs);".format(reg2, reg3, "_cmp", reg1)
-    elif inst=="jr":
-        return "movl ({0:d}*4+_regs), %eax; movl $inst_{1:03X}, %ebx; movl %ebx, ({2:d}*4+_regs); jmp *%eax;".format(reg2, instno+1, reg1)
+    elif inst=="jrf":
+        return "JRF({0:d},{1:d},{2:d},{3:03X},{4:03X})".format(reg1, reg2, reg3, instno+1, instno)
     elif inst=="stw":
-        return "STW({0:d},{1:d})".format(reg1, reg2)
+        return "STW({0:d},{1:d}, {2:d})".format(reg1, reg2, reg3)
     elif inst=="ldw":
-        return "LDW({0:d},{1:d})".format(reg1, reg2)
+        return "LDW({0:d},{1:d}, {2:d})".format(reg1, reg2, reg3)
     elif inst in {"add","sub","and","or","xor"}:
         return "movl ({0:d}*4+_regs), %eax; {1}l ({2:d}*4+_regs), %eax; movl %eax, ({3:d}*4+_regs)".format(reg2, inst, reg3, reg1)
     elif inst=="not":
         return "movl ({0:d}*4+_regs), %eax; not %eax; movl %eax, ({1:d}*4+_regs)".format(reg2, reg1)
     elif inst=="sll":
-        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ecx; cmpl $32, %ecx; jl tmp_label_{2:d}; movl $0, %eax; tmp_label_{2:d}: shll %cl, %eax; movl %eax, ({3:d}*4+_regs)".format(reg2, reg3, instno, reg1)
+        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ecx; cmpl $32, %ecx; jl tmp_label_{2:03X}; movl $0, %eax; tmp_label_{2:03X}: shll %cl, %eax; movl %eax, ({3:d}*4+_regs)".format(reg2, reg3, instno, reg1)
     elif inst=="srl":
-        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ecx; cmpl $32, %ecx; jl tmp_label_{2:d}; movl $0, %eax; tmp_label_{2:d}: shrl %cl, %eax; movl %eax, ({3:d}*4+_regs)".format(reg2, reg3, instno, reg1)
+        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ecx; cmpl $32, %ecx; jl tmp_label_{2:03X}; movl $0, %eax; tmp_label_{2:03X}: shrl %cl, %eax; movl %eax, ({3:d}*4+_regs)".format(reg2, reg3, instno, reg1)
     elif inst=="jreq":
-        return "movl ({1:d}*4+_regs), %ecx; movl ({2:d}*4+_regs), %eax; movl $inst_{3:03X}, %ebx; movl %ebx, ({4:d}*4+_regs); cmpl ${0:d}, %ecx; {5} tmp_label_{6:d}; jmp inst_{3:03X}; tmp_label_{6:d}: jmp *%eax;".format(1, reg2, reg3, instno+1, reg1, "je", instno)
+        return "movl ({1:d}*4+_regs), %ecx; movl ({2:d}*4+_regs), %eax; movl $inst_{3:03X}, %ebx; movl %ebx, ({4:d}*4+_regs); cmpl ${0:d}, %ecx; {5} tmp_label_{6:03X}; jmp inst_{3:03X}; tmp_label_{6:03X}: jmp *%eax;".format(1, reg2, reg3, instno+1, reg1, "je", instno)
     elif inst=="jrneq":
-        return "movl ({1:d}*4+_regs), %ecx; movl ({2:d}*4+_regs), %eax; movl $inst_{3:03X}, %ebx; movl %ebx, ({4:d}*4+_regs); cmpl ${0:d}, %ecx; {5} tmp_label_{6:d}; jmp inst_{3:03X}; tmp_label_{6:d}: jmp *%eax;".format(1, reg2, reg3, instno+1, reg1, "jne", instno)
+        return "movl ({1:d}*4+_regs), %ecx; movl ({2:d}*4+_regs), %eax; movl $inst_{3:03X}, %ebx; movl %ebx, ({4:d}*4+_regs); cmpl ${0:d}, %ecx; {5} tmp_label_{6:03X}; jmp inst_{3:03X}; tmp_label_{6:03X}: jmp *%eax;".format(1, reg2, reg3, instno+1, reg1, "jne", instno)
     elif inst=="jrgt":
-        return "movl ({1:d}*4+_regs), %ecx; movl ({2:d}*4+_regs), %eax; movl $inst_{3:03X}, %ebx; movl %ebx, ({4:d}*4+_regs); cmpl ${0:d}, %ecx; {5} tmp_label_{6:d}; jmp inst_{3:03X}; tmp_label_{6:d}: jmp *%eax;".format(2, reg2, reg3, instno+1, reg1, "je", instno)
+        return "movl ({1:d}*4+_regs), %ecx; movl ({2:d}*4+_regs), %eax; movl $inst_{3:03X}, %ebx; movl %ebx, ({4:d}*4+_regs); cmpl ${0:d}, %ecx; {5} tmp_label_{6:03X}; jmp inst_{3:03X}; tmp_label_{6:03X}: jmp *%eax;".format(2, reg2, reg3, instno+1, reg1, "je", instno)
     elif inst=="jrgte":
-        return "movl ({1:d}*4+_regs), %ecx; movl ({2:d}*4+_regs), %eax; movl $inst_{3:03X}, %ebx; movl %ebx, ({4:d}*4+_regs); cmpl ${0:d}, %ecx; {5} tmp_label_{6:d}; jmp inst_{3:03X}; tmp_label_{6:d}: jmp *%eax;".format(0, reg2, reg3, instno+1, reg1, "jne", instno)
+        return "movl ({1:d}*4+_regs), %ecx; movl ({2:d}*4+_regs), %eax; movl $inst_{3:03X}, %ebx; movl %ebx, ({4:d}*4+_regs); cmpl ${0:d}, %ecx; {5} tmp_label_{6:03X}; jmp inst_{3:03X}; tmp_label_{6:03X}: jmp *%eax;".format(0, reg2, reg3, instno+1, reg1, "jne", instno)
     elif inst=="jrlt":
-        return "movl ({1:d}*4+_regs), %ecx; movl ({2:d}*4+_regs), %eax; movl $inst_{3:03X}, %ebx; movl %ebx, ({4:d}*4+_regs); cmpl ${0:d}, %ecx; {5} tmp_label_{6:d}; jmp inst_{3:03X}; tmp_label_{6:d}: jmp *%eax;".format(0, reg2, reg3, instno+1, reg1, "je", instno)
+        return "movl ({1:d}*4+_regs), %ecx; movl ({2:d}*4+_regs), %eax; movl $inst_{3:03X}, %ebx; movl %ebx, ({4:d}*4+_regs); cmpl ${0:d}, %ecx; {5} tmp_label_{6:03X}; jmp inst_{3:03X}; tmp_label_{6:03X}: jmp *%eax;".format(0, reg2, reg3, instno+1, reg1, "je", instno)
     elif inst=="jrlte":
-        return "movl ({1:d}*4+_regs), %ecx; movl ({2:d}*4+_regs), %eax; movl $inst_{3:03X}, %ebx; movl %ebx, ({4:d}*4+_regs); cmpl ${0:d}, %ecx; {5} tmp_label_{6:d}; jmp inst_{3:03X}; tmp_label_{6:d}: jmp *%eax;".format(2, reg2, reg3, instno+1, reg1, "jne", instno)
-    elif inst in {"fadd","fmul","finv"}:
+        return "movl ({1:d}*4+_regs), %ecx; movl ({2:d}*4+_regs), %eax; movl $inst_{3:03X}, %ebx; movl %ebx, ({4:d}*4+_regs); cmpl ${0:d}, %ecx; {5} tmp_label_{6:03X}; jmp inst_{3:03X}; tmp_label_{6:03X}: jmp *%eax;".format(2, reg2, reg3, instno+1, reg1, "jne", instno)
+    # 0.015
+    elif inst in {"fadd","fsub","fmul","finv","faba"}:
         return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; CALL({2}); movl %eax, ({3:d}*4+_regs);".format(reg2, reg3, "_"+inst, reg1)
+    elif inst=="fabs":
+        return "movl ({0:d}*4+_regs), %eax; andl $2147483647, %eax; movl %eax, ({2:d}*4+_regs);".format(reg2, "__"+inst, reg1)
     elif inst=="fsqrt":
         return "movl ({0:d}*4+_regs), %eax; CALL({1}); movl %eax, ({2:d}*4+_regs);".format(reg2, "_"+inst, reg1)
-    elif inst in "fcmpl":
+    elif inst=="fcmp":
         return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; CALL({2}); movl %eax, ({3:d}*4+_regs);".format(reg2, reg3, "_"+inst, reg1)
-    return ""
+    else:
+        return ""
+
+def convert_op4(inst,instno,reg1,reg2,reg3,reg4):
+    # 0.6
+#    if inst=="fam":
+#        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; movl ({2:d}*4+_regs), %ecx; CALL({3}); movl %eax, ({4:d}*4+_regs);".format(reg2, reg3, reg4, "_"+inst, reg1)
+#    else:
+        return ""
 
 def get_labels(program):
     instnum=0
@@ -172,6 +237,62 @@ def write_binary(fp,fp_comment,program,program_org,labels,count_flag):
                 fp.write("// line:{0:d}\t{1}\n".format(line + 1,program_org[line]))
                 fp.write(".align 4; inst_{0:03X}:\n{1}\t\t{2}\n".format(instno,count_asm,inst_str))
                 wrote_flag=True
+        elif inst[0] in twoireg:#two reg & imm operation
+            if not (len(inst)==4):
+                print "wrong number of args in line {}.".format(line + 1)
+                print " ".join(inst)
+                exit(1)
+            else:
+                inst_str=convert_op2i(inst[0],instno,reg(inst[1]),reg(inst[2]),imm(inst[3],labels))
+                if inst_str=="":
+                    print "undefined opcode in line {}".format(line + 1)
+                    print " ".join(inst)
+                    exit(1)
+                fp.write("// line:{0:d}\t{1}\n".format(line + 1,program_org[line]))
+                fp.write(".align 4; inst_{0:03X}:\n{1}\t\t{2}\n".format(instno,count_asm,inst_str))
+                wrote_flag=True
+        elif inst[0] in twoicreg:#two reg & imm & condition operation
+            if not (len(inst)==5):
+                print "wrong number of args in line {}.".format(line + 1)
+                print " ".join(inst)
+                exit(1)
+            else:
+                inst_str=convert_op2ic(inst[0],instno,reg(inst[1]),reg(inst[2]),imm(inst[3],labels),int(inst[4],0))
+                if inst_str=="":
+                    print "undefined opcode in line {}".format(line + 1)
+                    print " ".join(inst)
+                    exit(1)
+                fp.write("// line:{0:d}\t{1}\n".format(line + 1,program_org[line]))
+                fp.write(".align 4; inst_{0:03X}:\n{1}\t\t{2}\n".format(instno,count_asm,inst_str))
+                wrote_flag=True
+        elif inst[0] in threecreg:#three reg & condition operation
+            if not (len(inst)==5):
+                print "wrong number of args in line {}.".format(line + 1)
+                print " ".join(inst)
+                exit(1)
+            else:
+                inst_str=convert_op3c(inst[0],instno,reg(inst[1]),reg(inst[2]),reg(inst[3]),int(inst[4],0))
+                if inst_str=="":
+                    print "undefined opcode in line {}".format(line + 1)
+                    print " ".join(inst)
+                    exit(1)
+                fp.write("// line:{0:d}\t{1}\n".format(line + 1,program_org[line]))
+                fp.write(".align 4; inst_{0:03X}:\n{1}\t\t{2}\n".format(instno,count_asm,inst_str))
+                wrote_flag=True
+        elif inst[0] in fourreg:#four reg operation
+            if not (len(inst)==5):
+                print "wrong number of args in line {}.".format(line + 1)
+                print " ".join(inst)
+                exit(1)
+            else:
+                inst_str=convert_op4(inst[0],instno,reg(inst[1]),reg(inst[2]),reg(inst[3]),reg(inst[4]))
+                if inst_str=="":
+                    print "undefined opcode in line {}".format(line + 1)
+                    print " ".join(inst)
+                    exit(1)
+                fp.write("// line:{0:d}\t{1}\n".format(line + 1,program_org[line]))
+                fp.write(".align 4; inst_{0:03X}:\n{1}\t\t{2}\n".format(instno,count_asm,inst_str))
+                wrote_flag=True
         else:#three reg operation
             if not(len(inst)==4 or len(inst)==3):#delete!
                 print "wrong number of args in line {}.".format(line + 1)
@@ -218,7 +339,7 @@ def main():
     file_out.write(".globl _exec_count\n")
     file_out.write("\t\t.comm _exec_count,8\n")
     file_out.write(".globl _generic_count\n")
-    file_out.write("\t\t.comm _generic_count,4\n")
+    file_out.write("\t\t.comm _generic_count,8\n")
     file_out.write(".globl _mem_offset\n")
     file_out.write("\t\t.comm _mem_offset,4\n")
     file_out.write(".text\n")
