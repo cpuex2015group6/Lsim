@@ -11,7 +11,9 @@ onereg={"limm","j","in","out","hlt","show","count","showexec","setcurexec","gete
 twoireg={"stwi","ldwi","jif","addi","subi","slli","srli"}
 twoicreg={"cmpic","jic","fjic"}
 threecreg={"cmpc","fcmpc","jrc","fjrc"}
+threeicreg={"cmpaic"}
 fourreg={"fam"}
+fourcreg={"cmpac","fcmpac"}
 
 def convert_op1(inst,instno,reg,imm):
     if inst=="limm":
@@ -80,7 +82,6 @@ def convert_op3c(inst,instno,reg1,reg2,reg3,condition):
         return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; movl ${2:d}, %ecx; CALL({3}); JRC({4:d},{5:03X},{6:03X})".format(reg1, reg2, condition, "_fcmpc", reg3, instno + 1, instno)
     else:
         return ""
-
     
 def convert_op3(inst,instno,reg1,reg2,reg3):
     if inst=="cmp":
@@ -123,11 +124,25 @@ def convert_op3(inst,instno,reg1,reg2,reg3):
     else:
         return ""
 
+def convert_op3ic(inst,instno,reg1,reg2,imm,reg3,condition):
+    if inst=="cmpaic":
+        return "movl ({0:d}*4+_regs), %eax; movl ${1:d}, %ebx; movl ${2:d}, %ecx; CALL({3}); movl ({4:d}*4+_regs), %ebx; andl %eax, %ebx; movl %ebx, ({5:d}*4+_regs);".format(reg2, imm, condition, "_cmpc", reg3, reg1)
+    else:
+        return ""
+
 def convert_op4(inst,instno,reg1,reg2,reg3,reg4):
     # 0.6
 #    if inst=="fam":
 #        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; movl ({2:d}*4+_regs), %ecx; CALL({3}); movl %eax, ({4:d}*4+_regs);".format(reg2, reg3, reg4, "_"+inst, reg1)
 #    else:
+        return ""
+
+def convert_op4c(inst,instno,reg1,reg2,reg3,reg4,condition):
+    if inst=="cmpac":
+        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; movl ${2:d}, %ecx; CALL({3}); movl ({4:d}*4+_regs), %ebx; andl %eax, %ebx; movl %ebx, ({5:d}*4+_regs);".format(reg2, reg3, condition, "_cmpc", reg4, reg1)
+    elif inst=="fcmpac":
+        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; movl ${2:d}, %ecx; CALL({3}); movl ({4:d}*4+_regs), %ebx; andl %eax, %ebx; movl %ebx, ({5:d}*4+_regs);".format(reg2, reg3, condition, "_fcmpc", reg4, reg1)
+    else:
         return ""
 
 def get_labels(program):
@@ -279,6 +294,20 @@ def write_binary(fp,fp_comment,program,program_org,labels,count_flag):
                 fp.write("// line:{0:d}\t{1}\n".format(line + 1,program_org[line]))
                 fp.write(".align 4; inst_{0:03X}:\n{1}\t\t{2}\n".format(instno,count_asm,inst_str))
                 wrote_flag=True
+        elif inst[0] in threeicreg:#three reg & imm & condition operation
+            if not (len(inst)==6):
+                print "wrong number of args in line {}.".format(line + 1)
+                print " ".join(inst)
+                exit(1)
+            else:
+                inst_str=convert_op3ic(inst[0],instno,reg(inst[1]),reg(inst[2]),imm(inst[3],labels),reg(inst[4]),int(inst[5],0))
+                if inst_str=="":
+                    print "undefined opcode in line {}".format(line + 1)
+                    print " ".join(inst)
+                    exit(1)
+                fp.write("// line:{0:d}\t{1}\n".format(line + 1,program_org[line]))
+                fp.write(".align 4; inst_{0:03X}:\n{1}\t\t{2}\n".format(instno,count_asm,inst_str))
+                wrote_flag=True
         elif inst[0] in fourreg:#four reg operation
             if not (len(inst)==5):
                 print "wrong number of args in line {}.".format(line + 1)
@@ -286,6 +315,20 @@ def write_binary(fp,fp_comment,program,program_org,labels,count_flag):
                 exit(1)
             else:
                 inst_str=convert_op4(inst[0],instno,reg(inst[1]),reg(inst[2]),reg(inst[3]),reg(inst[4]))
+                if inst_str=="":
+                    print "undefined opcode in line {}".format(line + 1)
+                    print " ".join(inst)
+                    exit(1)
+                fp.write("// line:{0:d}\t{1}\n".format(line + 1,program_org[line]))
+                fp.write(".align 4; inst_{0:03X}:\n{1}\t\t{2}\n".format(instno,count_asm,inst_str))
+                wrote_flag=True
+        elif inst[0] in fourcreg:#four reg & condition operation
+            if not (len(inst)==6):
+                print "wrong number of args in line {}.".format(line + 1)
+                print " ".join(inst)
+                exit(1)
+            else:
+                inst_str=convert_op4c(inst[0],instno,reg(inst[1]),reg(inst[2]),reg(inst[3]),reg(inst[4]),int(inst[5],0))
                 if inst_str=="":
                     print "undefined opcode in line {}".format(line + 1)
                     print " ".join(inst)

@@ -191,6 +191,7 @@ int fcmpc(uint32_t a, uint32_t b, uint32_t c) {
 void min_caml_entry();
 
 int main() {
+  int i;
   if ((rfp = fopen("stdin", "r")) == NULL) {
     fprintf(stderr, "%sのオープンに失敗しました。\n", "stdin");
     return EXIT_FAILURE;
@@ -205,7 +206,9 @@ int main() {
   printf("registers    : 0x%x\n", (uint32_t)regs);
   printf("memory space : 0x%x\n", (uint32_t)(mem_offset[0]));
   fflush(stdout);
-  regs[255] = 0;
+  for (i = 0; i < 255; i++) {
+    regs[i] = 0;
+  }
   min_caml_entry();
   printf("limm_count:%f\n",limm_count[0]/100000000.0);
   printf("generic_count:%"PRIu64"\n",generic_count[0]);
