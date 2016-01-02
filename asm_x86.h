@@ -11,8 +11,6 @@
 
 #define ADDI(dest, src, imm) movl (src*4+_regs), %eax; addl $imm, %eax; movl %eax, (dest*4+_regs)
 #define SUBI(dest, src, imm) movl (src*4+_regs), %eax; subl $imm, %eax; movl %eax, (dest*4+_regs)
-#define SLLI(dest, src, imm, cur) movl (src*4+_regs), %eax; movl $imm, %ecx; cmpl $32, %ecx; jl tmp_label_##cur; movl $0, %eax; tmp_label_##cur: shll %cl, %eax; movl %eax, (dest*4+_regs)
-#define SRLI(dest, src, imm, cur) movl (src*4+_regs), %eax; movl $imm, %ecx; cmpl $32, %ecx; jl tmp_label_##cur; movl $0, %eax; tmp_label_##cur: shrl %cl, %eax; movl %eax, (dest*4+_regs)
 
 #define LDWI(dest, src, imm) movl (src*4+_regs), %eax; addl $imm, %eax; shll $2, %eax; addl (_mem_offset), %eax; movl (%eax), %eax; movl %eax, (dest*4+_regs);
 #define STWI(dest, src, imm) movl (dest*4+_regs), %eax; addl $imm, %eax; shll $2, %eax; addl (_mem_offset), %eax; movl (src*4+_regs), %ebx; movl %ebx, (%eax);

@@ -20,16 +20,6 @@ void out(uint32_t a) {
   fflush(wfp);
 }
 
-uint32_t cmp(int32_t a, int32_t b) {
-  if (a > b) {
-    return 2;
-  } else if (a == b) {
-    return 1;
-  } else {
-    return 0;
-  }
-}
-
 uint32_t cmpc(int32_t a, int32_t b, uint32_t c) {
   if (a > b) {
     return c & 4 ? 1 : 0;
@@ -149,31 +139,11 @@ uint32_t fam(uint32_t a, uint32_t b, uint32_t c) {
   return rt.i;
 }
 
-uint32_t _fabs(uint32_t a) {
-  Float ra, rt;
-  ra.i = a;
-  rt.f = fabsf(ra.f);
-  return rt.i;
-}
-
 uint32_t fsqrt(uint32_t a) {
   Float ra, rt;
   ra.i = a;
   rt.f = sqrtf(ra.f);
   return rt.i;
-}
-
-int fcmp(uint32_t a, uint32_t b) {
-  Float ra, rb;
-  ra.i = a;
-  rb.i = b;
-  if (ra.f > rb.f) {
-    return 2;
-  } else if (ra.f == rb.f) {
-    return 1;
-  } else {
-    return 0;
-  }
 }
 
 int fcmpc(uint32_t a, uint32_t b, uint32_t c) {
