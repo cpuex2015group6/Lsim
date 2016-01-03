@@ -172,7 +172,7 @@ int main() {
   }
   exec_fifo.i = 0;
   // メモリ空間(SRAM)は4MB
-  mem_offset[0] = malloc(4*1024*1024);
+  mem_offset[0] = malloc(40*1024*1024);
   printf("registers    : 0x%x\n", (uint32_t)regs);
   printf("memory space : 0x%x\n", (uint32_t)(mem_offset[0]));
   fflush(stdout);
