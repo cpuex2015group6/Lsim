@@ -18,7 +18,10 @@
 #define JIC(imm, next, cur) movl %eax, %ecx; movl $imm, %eax; cmpl $1, %ecx; je tmp_label_##cur; jmp inst_##next; tmp_label_##cur: jmp *%eax;
 #define JRC(target, next, cur) movl %eax, %ecx; movl (target*4+_regs), %eax; cmpl $1, %ecx; je tmp_label_##cur; jmp inst_##next; tmp_label_##cur: jmp *%eax;
 
-#define JIF(dest, cond, imm, next, cur) movl (cond*4+_regs), %ecx; movl $imm, %eax; movl $inst_##next, %ebx; movl %ebx, (dest*4+_regs); cmpl $0, %ecx; je tmp_label_##cur; jmp inst_##next; tmp_label_##cur: jmp *%eax;
-#define JRF(dest, cond, target, next, cur) movl (cond*4+_regs), %ecx; movl (target*4+_regs), %eax; movl $inst_##next, %ebx; movl %ebx, (dest*4+_regs); cmpl $0, %ecx; je tmp_label_##cur; jmp inst_##next; tmp_label_##cur: jmp *%eax;
+#define JIF(dest, cond, imm, next, cur) movl (cond*4+_regs), %ecx; movl $imm, %eax; cmpl $0, %ecx; je tmp_label_##cur; jmp inst_##next; tmp_label_##cur: movl $0, (dest*4+_regs); jmp *%eax;
+#define JRF(dest, cond, target, next, cur) movl (cond*4+_regs), %ecx; movl (target*4+_regs), %eax; cmpl $0, %ecx; je tmp_label_##cur; jmp inst_##next; tmp_label_##cur: movl $0, (dest*4+_regs); jmp *%eax;
+
+#define CI(dest, cond, imm, next, cur) movl (cond*4+_regs), %ecx; movl $imm, %eax; movl $inst_##next, %ebx; movl %ebx, (dest*4+_regs); cmpl $0, %ecx; je tmp_label_##cur; jmp inst_##next; tmp_label_##cur: jmp *%eax;
+#define CR(dest, cond, target, next, cur) movl (cond*4+_regs), %ecx; movl (target*4+_regs), %eax; movl $inst_##next, %ebx; movl %ebx, (dest*4+_regs); cmpl $0, %ecx; je tmp_label_##cur; jmp inst_##next; tmp_label_##cur: jmp *%eax;
 
 #endif /* __LIGHTNING_ASM_X86_H__ */

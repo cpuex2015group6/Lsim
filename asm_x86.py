@@ -8,7 +8,7 @@ import math
 ignore={".text",".globl",".align",".data",".literal8"}
 nowrite=ignore
 onereg={"limm","in","out","hlt","show","count","showexec","setcurexec","getexecdiff"}
-twoireg={"stwi","ldwi","jif","addi","subi"}
+twoireg={"stwi","ldwi","jif","ci","addi","subi"}
 twoicreg={"cmpic","cmpaic","jic","fjic"}
 threecreg={"cmpc","fcmpc","cmpac","fcmpac","jrc","fjrc"}
 
@@ -48,6 +48,8 @@ def convert_op2i(inst,instno,reg1,reg2,imm):
         return "SUBI({0:d},{1:d},{2:d})".format(reg1, reg2, imm)
     elif inst=="jif":
         return "JIF({0:d},{1:d},{2},{3:03X},{4:03X})".format(reg1, reg2, imm, instno+1, instno)
+    elif inst=="ci":
+        return "CI({0:d},{1:d},{2},{3:03X},{4:03X})".format(reg1, reg2, imm, instno+1, instno)
     else:
         return ""
 
@@ -82,6 +84,8 @@ def convert_op3c(inst,instno,reg1,reg2,reg3,condition):
 def convert_op3(inst,instno,reg1,reg2,reg3):
     if inst=="jrf":
         return "JRF({0:d},{1:d},{2:d},{3:03X},{4:03X})".format(reg1, reg2, reg3, instno+1, instno)
+    elif inst=="cr":
+        return "CR({0:d},{1:d},{2:d},{3:03X},{4:03X})".format(reg1, reg2, reg3, instno+1, instno)
     elif inst=="stw":
         return "STW({0:d},{1:d},{2:d})".format(reg1, reg2, reg3)
     elif inst=="ldw":
