@@ -15,25 +15,25 @@ threecreg={"cmpc","fcmpc","cmpac","fcmpac","jrc","fjrc"}
 def convert_op1(inst,instno,reg,imm):
     if inst=="limm":
         if isinstance(imm,int):
-            return "INCQ({2});movl ${0:d}, ({1:d}*4+_regs);".format(imm, reg, "_limm_count")
+            return "INCQ({2});movl ${0:d}, ({1:d}*4+cdecl(regs));".format(imm, reg, "cdecl(limm_count)")
         else:
-            return "INCQ({2});movl ${0}, %eax; movl %eax, ({1:d}*4+_regs);".format(imm, reg, "_limm_count")
+            return "INCQ({2});movl ${0}, %eax; movl %eax, ({1:d}*4+cdecl(regs));".format(imm, reg, "cdecl(limm_count)")
     elif inst=="in":
-        return "CALL({0}); movl %eax, ({1:d}*4+_regs);".format("_in",reg)
+        return "CALL({0}); movl %eax, ({1:d}*4+cdecl(regs));".format("cdecl(in)",reg)
     elif inst=="out":
-        return "movl ({0:d}*4+_regs), %eax; CALL({1});".format(reg,"_out")
+        return "movl ({0:d}*4+cdecl(regs)), %eax; CALL({1});".format(reg,"cdecl(out)")
     elif inst=="hlt":
         return "popl %ebp; ret;"
     elif inst=="show":
-        return "movl ({0:d}*4+_regs), %eax; CALL({1});".format(reg,"_show")
+        return "movl ({0:d}*4+cdecl(regs)), %eax; CALL({1});".format(reg,"cdecl(show)")
     elif inst=="count":
-        return "INCQ({0});".format("_generic_count")
+        return "INCQ({0});".format("cdecl(generic_count)")
     elif inst=="showexec":
-        return "CALL({0});".format("_showexec")
+        return "CALL({0});".format("cdecl(showexec)")
     elif inst=="setcurexec":
-        return "CALL({0});".format("_setcurexec")
+        return "CALL({0});".format("cdecl(setcurexec)")
     elif inst=="getexecdiff":
-        return "CALL({0});".format("_getexecdiff")
+        return "CALL({0});".format("cdecl(getexecdiff)")
     else:
         return ""
 
@@ -55,29 +55,29 @@ def convert_op2i(inst,instno,reg1,reg2,imm):
 
 def convert_op2ic(inst,instno,reg1,reg2,imm,condition):
     if inst=="cmpic":
-        return "movl ({0:d}*4+_regs), %eax; movl ${1:d}, %ebx; movl ${2:d}, %ecx; CALL({3}); movl %eax, ({4:d}*4+_regs);".format(reg2, imm, condition, "_cmpc", reg1)
+        return "movl ({0:d}*4+cdecl(regs)), %eax; movl ${1:d}, %ebx; movl ${2:d}, %ecx; CALL({3}); movl %eax, ({4:d}*4+cdecl(regs));".format(reg2, imm, condition, "cdecl(cmpc)", reg1)
     elif inst=="cmpaic":
-        return "movl ({0:d}*4+_regs), %eax; movl ${1:d}, %ebx; movl ${2:d}, %ecx; CALL({3}); andl %eax, ({4:d}*4+_regs);".format(reg2, imm, condition, "_cmpc", reg1)
+        return "movl ({0:d}*4+cdecl(regs)), %eax; movl ${1:d}, %ebx; movl ${2:d}, %ecx; CALL({3}); andl %eax, ({4:d}*4+cdecl(regs));".format(reg2, imm, condition, "cdecl(cmpc)", reg1)
     elif inst=="jic":
-        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; movl ${2:d}, %ecx; CALL({3}); JIC({4},{5:03X},{6:03X})".format(reg1, reg2, condition, "_cmpc", imm, instno + 1, instno)
+        return "movl ({0:d}*4+cdecl(regs)), %eax; movl ({1:d}*4+cdecl(regs)), %ebx; movl ${2:d}, %ecx; CALL({3}); JIC({4},{5:03X},{6:03X})".format(reg1, reg2, condition, "cdecl(cmpc)", imm, instno + 1, instno)
     elif inst=="fjic":
-        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; movl ${2:d}, %ecx; CALL({3}); JIC({4},{5:03X},{6:03X})".format(reg1, reg2, condition, "_fcmpc", imm, instno + 1, instno)
+        return "movl ({0:d}*4+cdecl(regs)), %eax; movl ({1:d}*4+cdecl(regs)), %ebx; movl ${2:d}, %ecx; CALL({3}); JIC({4},{5:03X},{6:03X})".format(reg1, reg2, condition, "cdecl(fcmpc)", imm, instno + 1, instno)
     else:
         return ""
 
 def convert_op3c(inst,instno,reg1,reg2,reg3,condition):
     if inst=="cmpc":
-        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; movl ${2:d}, %ecx; CALL({3}); movl %eax, ({4:d}*4+_regs);".format(reg2, reg3, condition, "_cmpc", reg1)
+        return "movl ({0:d}*4+cdecl(regs)), %eax; movl ({1:d}*4+cdecl(regs)), %ebx; movl ${2:d}, %ecx; CALL({3}); movl %eax, ({4:d}*4+cdecl(regs));".format(reg2, reg3, condition, "cdecl(cmpc)", reg1)
     elif inst=="fcmpc":
-        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; movl ${2:d}, %ecx; CALL({3}); movl %eax, ({4:d}*4+_regs);".format(reg2, reg3, condition, "_fcmpc", reg1)
+        return "movl ({0:d}*4+cdecl(regs)), %eax; movl ({1:d}*4+cdecl(regs)), %ebx; movl ${2:d}, %ecx; CALL({3}); movl %eax, ({4:d}*4+cdecl(regs));".format(reg2, reg3, condition, "cdecl(fcmpc)", reg1)
     elif inst=="cmpac":
-        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; movl ${2:d}, %ecx; CALL({3}); andl %eax, ({4:d}*4+_regs);".format(reg2, reg3, condition, "_cmpc", reg1)
+        return "movl ({0:d}*4+cdecl(regs)), %eax; movl ({1:d}*4+cdecl(regs)), %ebx; movl ${2:d}, %ecx; CALL({3}); andl %eax, ({4:d}*4+cdecl(regs));".format(reg2, reg3, condition, "cdecl(cmpc)", reg1)
     elif inst=="fcmpac":
-        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; movl ${2:d}, %ecx; CALL({3}); andl %eax, ({4:d}*4+_regs);".format(reg2, reg3, condition, "_fcmpc", reg1)
+        return "movl ({0:d}*4+cdecl(regs)), %eax; movl ({1:d}*4+cdecl(regs)), %ebx; movl ${2:d}, %ecx; CALL({3}); andl %eax, ({4:d}*4+cdecl(regs));".format(reg2, reg3, condition, "cdecl(fcmpc)", reg1)
     elif inst=="jrc":
-        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; movl ${2:d}, %ecx; CALL({3}); JRC({4:d},{5:03X},{6:03X})".format(reg1, reg2, condition, "_cmpc", reg3, instno + 1, instno)
+        return "movl ({0:d}*4+cdecl(regs)), %eax; movl ({1:d}*4+cdecl(regs)), %ebx; movl ${2:d}, %ecx; CALL({3}); JRC({4:d},{5:03X},{6:03X})".format(reg1, reg2, condition, "cdecl(cmpc)", reg3, instno + 1, instno)
     elif inst=="fjrc":
-        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; movl ${2:d}, %ecx; CALL({3}); JRC({4:d},{5:03X},{6:03X})".format(reg1, reg2, condition, "_fcmpc", reg3, instno + 1, instno)
+        return "movl ({0:d}*4+cdecl(regs)), %eax; movl ({1:d}*4+cdecl(regs)), %ebx; movl ${2:d}, %ecx; CALL({3}); JRC({4:d},{5:03X},{6:03X})".format(reg1, reg2, condition, "cdecl(fcmpc)", reg3, instno + 1, instno)
     else:
         return ""
     
@@ -91,16 +91,16 @@ def convert_op3(inst,instno,reg1,reg2,reg3):
     elif inst=="ldw":
         return "LDW({0:d},{1:d},{2:d})".format(reg1, reg2, reg3)
     elif inst in {"add","sub","and","or","xor"}:
-        return "movl ({0:d}*4+_regs), %eax; {1}l ({2:d}*4+_regs), %eax; movl %eax, ({3:d}*4+_regs)".format(reg2, inst, reg3, reg1)
+        return "movl ({0:d}*4+cdecl(regs)), %eax; {1}l ({2:d}*4+cdecl(regs)), %eax; movl %eax, ({3:d}*4+cdecl(regs))".format(reg2, inst, reg3, reg1)
     elif inst=="sll":
-        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ecx; cmpl $32, %ecx; jl tmp_label_{2:03X}; movl $0, %eax; tmp_label_{2:03X}: shll %cl, %eax; movl %eax, ({3:d}*4+_regs)".format(reg2, reg3, instno, reg1)
+        return "movl ({0:d}*4+cdecl(regs)), %eax; movl ({1:d}*4+cdecl(regs)), %ecx; cmpl $32, %ecx; jl tmp_label_{2:03X}; movl $0, %eax; tmp_label_{2:03X}: shll %cl, %eax; movl %eax, ({3:d}*4+cdecl(regs))".format(reg2, reg3, instno, reg1)
     elif inst=="srl":
-        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ecx; cmpl $32, %ecx; jl tmp_label_{2:03X}; movl $0, %eax; tmp_label_{2:03X}: shrl %cl, %eax; movl %eax, ({3:d}*4+_regs)".format(reg2, reg3, instno, reg1)
+        return "movl ({0:d}*4+cdecl(regs)), %eax; movl ({1:d}*4+cdecl(regs)), %ecx; cmpl $32, %ecx; jl tmp_label_{2:03X}; movl $0, %eax; tmp_label_{2:03X}: shrl %cl, %eax; movl %eax, ({3:d}*4+cdecl(regs))".format(reg2, reg3, instno, reg1)
     # 0.015
     elif inst in {"fadd","fsub","fmul","finv","faba"}:
-        return "movl ({0:d}*4+_regs), %eax; movl ({1:d}*4+_regs), %ebx; CALL({2}); movl %eax, ({3:d}*4+_regs);".format(reg2, reg3, "_"+inst, reg1)
+        return "movl ({0:d}*4+cdecl(regs)), %eax; movl ({1:d}*4+cdecl(regs)), %ebx; CALL({2}); movl %eax, ({3:d}*4+cdecl(regs));".format(reg2, reg3, "cdecl("+inst+")", reg1)
     elif inst=="fsqrt":
-        return "movl ({0:d}*4+_regs), %eax; CALL({1}); movl %eax, ({2:d}*4+_regs);".format(reg2, "_"+inst, reg1)
+        return "movl ({0:d}*4+cdecl(regs)), %eax; CALL({1}); movl %eax, ({2:d}*4+cdecl(regs));".format(reg2, "cdecl("+inst+")", reg1)
     else:
         return ""
 
@@ -173,7 +173,7 @@ def write_data(fp,fp_comment,program,program_org,labels):
         elif inst[0] in ignore:
             pass
         elif inst[0]==".long":#long
-            fp.write("\t\tmovl $0x{0:X}, %eax; addl (_mem_offset), %eax; movl $0x{1:08X}, (%eax);\n".format(datano*4, imm(inst[1],labels)))
+            fp.write("\t\tmovl $0x{0:X}, %eax; addl (cdecl(mem_offset)), %eax; movl $0x{1:08X}, (%eax);\n".format(datano*4, imm(inst[1],labels)))
             datano+=1
         else:
             pass
@@ -181,7 +181,7 @@ def write_data(fp,fp_comment,program,program_org,labels):
 def write_binary(fp,fp_comment,program,program_org,labels,count_flag):
     instno=0
     if count_flag:
-        count_asm="\t\tINCQ({0});\n".format("_exec_count")
+        count_asm="\t\tINCQ({0});\n".format("cdecl(exec_count)")
     else:
         count_asm=""
     for line,inst in enumerate(program):
@@ -292,20 +292,20 @@ def main():
 
 
     file_out.write("#include \"asm_x86.h\"\n")
-    file_out.write(".globl _regs\n")
-    file_out.write("\t\t.comm _regs, 1024\n")
-    file_out.write(".globl _limm_count\n")
-    file_out.write("\t\t.comm _limm_count,8\n")
-    file_out.write(".globl _exec_count\n")
-    file_out.write("\t\t.comm _exec_count,8\n")
-    file_out.write(".globl _generic_count\n")
-    file_out.write("\t\t.comm _generic_count,8\n")
-    file_out.write(".globl _mem_offset\n")
-    file_out.write("\t\t.comm _mem_offset,4\n")
+    file_out.write(".globl cdecl(regs)\n")
+    file_out.write("\t\t.comm cdecl(regs), 1024\n")
+    file_out.write(".globl cdecl(limm_count)\n")
+    file_out.write("\t\t.comm cdecl(limm_count),8\n")
+    file_out.write(".globl cdecl(exec_count)\n")
+    file_out.write("\t\t.comm cdecl(exec_count),8\n")
+    file_out.write(".globl cdecl(generic_count)\n")
+    file_out.write("\t\t.comm cdecl(generic_count),8\n")
+    file_out.write(".globl cdecl(mem_offset)\n")
+    file_out.write("\t\t.comm cdecl(mem_offset),4\n")
     file_out.write(".text\n")
     file_out.write(".align 4\n")
-    file_out.write(".global _min_caml_entry\n")
-    file_out.write("_min_caml_entry:\n")
+    file_out.write(".global cdecl(min_caml_entry)\n")
+    file_out.write("cdecl(min_caml_entry):\n")
     file_out.write("\t\tpushl %ebp; movl %esp, %ebp;\n")
     write_data(file_out,file_comment,program,program_org,labels)
     file_out.write("\t\tjmp _min_caml_init;\n")
