@@ -16,7 +16,7 @@ RM=rm -f
 asm_x86.S: asm_x86.cpuexasm
 	python ./asm_x86.py asm_x86.cpuexasm
 $(X86_TARGET): $(X86_OBJS)
-	$(LD) $(LDFLAGS) -o $@ $?
+	$(LD) $(LDFLAGS) -o $@ $^
 -include $(DEPS)
 clean:
 	$(RM) asm_x86.S $(X86_OBJS) $(X86_TARGET)
