@@ -1,12 +1,12 @@
-CFLAGS=-Wall -O2 -m32 -g0
+CFLAGS=-Wall -O2 -m32 -g0 -mfpmath=sse -msse2
 ASFLAGS=-m32 -g0
 OS := $(shell uname)
 ifeq ($(OS),Linux)
-LDFLAGS= -m32 -g0
+LDFLAGS= -m32 -mfpmath=sse -msse2 -g0
 LD=g++
 endif
 ifeq ($(OS),Darwin)
-LDFLAGS=-pthread -lm -m32 -Wl,-no_pie -g0
+LDFLAGS=-pthread -lm -m32 -mfpmath=sse -msse2 -Wl,-no_pie -g0
 LD=gcc
 endif
 X86_OBJS=asm_x86lib.o asm_x86.o

@@ -7,7 +7,7 @@ import math
 
 ignore={".text",".globl",".align",".data",".literal8"}
 nowrite=ignore
-onereg={"limm","in","out","hlt","show","count","showexec","setcurexec","getexecdiff"}
+onereg={"limm","in","out","hlt","show"}
 twoireg={"stwi","ldwi","jif","ci","addi","subi"}
 twoicreg={"cmpic","cmpaic","jic","fjic"}
 threecreg={"cmpc","fcmpc","cmpac","fcmpac","jrc","fjrc"}
@@ -26,14 +26,6 @@ def convert_op1(inst,instno,reg,imm):
         return "popl %ebp; ret;"
     elif inst=="show":
         return "movl ({0:d}*4+cdecl(regs)), %eax; CALL({1});".format(reg,"cdecl(show)")
-    elif inst=="count":
-        return "INCQ({0});".format("cdecl(generic_count)")
-    elif inst=="showexec":
-        return "CALL({0});".format("cdecl(showexec)")
-    elif inst=="setcurexec":
-        return "CALL({0});".format("cdecl(setcurexec)")
-    elif inst=="getexecdiff":
-        return "CALL({0});".format("cdecl(getexecdiff)")
     else:
         return ""
 
@@ -49,7 +41,18 @@ def convert_op2i(inst,instno,reg1,reg2,imm):
     elif inst=="jif":
         return "JIF({0:d},{1:d},{2},{3:03X},{4:03X})".format(reg1, reg2, imm, instno+1, instno)
     elif inst=="ci":
-        return "CI({0:d},{1:d},{2},{3:03X},{4:03X})".format(reg1, reg2, imm, instno+1, instno)
+        if imm=="min_caml_count":
+            return "INCQ({0});".format("cdecl(generic_count)")
+        elif imm=="min_caml_showexec":
+            return "CALL({0});".format("cdecl(showexec)")
+        elif imm=="min_caml_setcurexec" or imm=="min_caml_sce":
+            return "CALL({0});".format("cdecl(setcurexec)")
+        elif imm=="min_caml_getexecdiff" or imm=="min_caml_ged":
+            return "CALL({0});".format("cdecl(getexecdiff)")
+        elif imm=="min_caml_generic":
+            return "movl (7*4+cdecl(regs)), %eax; movl (8*4+cdecl(regs)), %ebx; movl (9*4+cdecl(regs)), %ecx; movl (10*4+cdecl(regs)), %edx; CALL({0}); movl %eax, (7*4+cdecl(regs));".format("cdecl(generic)")
+        else:
+            return "CI({0:d},{1:d},{2},{3:03X},{4:03X})".format(reg1, reg2, imm, instno+1, instno)
     else:
         return ""
 
@@ -107,7 +110,15 @@ def convert_op3(inst,instno,reg1,reg2,reg3):
 def get_labels(program):
     instnum=0
     datanum = 0
-    labels={}
+    labels={
+        "min_caml_count:":0,
+        "min_caml_showexec:":0,
+        "min_caml_setcurexec:":0,
+        "min_caml_sce:":0,
+        "min_caml_getexecdiff:":0,
+        "min_caml_ged:":0,
+        "min_caml_generic:":0
+    }
     for inst in program:
         if len(inst)==0 or (inst[0] in nowrite):#nowrite or empty
             continue

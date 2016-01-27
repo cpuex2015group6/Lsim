@@ -8,8 +8,8 @@
 #endif
 
 
-// 3引数まで対応
-#define CALL(func) subl $24, %esp; movl %ecx, 8(%esp); movl %ebx, 4(%esp); movl %eax, (%esp); call func; addl $24, %esp
+// 4引数まで対応
+#define CALL(func) subl $24, %esp; movl %edx, 12(%esp); movl %ecx, 8(%esp); movl %ebx, 4(%esp); movl %eax, (%esp); call func; addl $24, %esp
 
 #define INCQ(var) movl $var, %eax; movl (%eax), %ecx; addl $1, %ecx; adcl $0, 4(%eax); movl %ecx, (%eax)
 

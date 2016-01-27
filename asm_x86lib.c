@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <math.h>
@@ -10,6 +11,39 @@ extern uint64_t exec_count[1];
 extern uint64_t generic_count[1];
 extern uint32_t regs[256];
 extern uint32_t *mem_offset[1];
+
+typedef union {
+  uint32_t i;
+  float f;
+} Float;
+
+uint32_t generic(uint32_t comm, uint32_t a1, uint32_t a2, uint32_t a3) {
+  switch(comm) {
+  case 0:
+    printf("generic cmd test (a1:%d, a2:%d, a3:%d)\n", a1, a2, a3);
+    return 123;
+    break;
+  case 901:
+    // int_of_float
+    {
+      Float f1;
+      f1.i = a2;
+      assert((int)f1.f == a1);
+    }
+    break;
+  case 902:
+    // float_of_int
+    {
+      Float f1;
+      f1.f = (float)a2;
+      assert(f1.i == a1);
+    }
+    break;
+  default:
+    printf("undefined generic cmd called.\n");
+  }
+  return 0;
+}
 
 uint32_t in() {
   return getc(rfp);
@@ -85,11 +119,6 @@ void getexecdiff() {
   printf("%d exec cnts: %"PRIu64"\n",i, cnt);
   i++;
 }
-
-typedef union {
-  uint32_t i;
-  float f;
-} Float;
 
 uint32_t fadd(uint32_t a, uint32_t b) {
   Float ra, rb, rt;
