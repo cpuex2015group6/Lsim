@@ -28,7 +28,10 @@ uint32_t generic(uint32_t comm, uint32_t a1, uint32_t a2, uint32_t a3) {
     {
       Float f1;
       f1.i = a2;
-      assert((int)f1.f == a1);
+      if ((int)f1.f != a1) {
+        printf("assertion failed! a1:%d a2:%x f:%d\n", a1, a2, (int)f1.f);
+        assert(0);
+      }
     }
     break;
   case 902:
@@ -36,7 +39,10 @@ uint32_t generic(uint32_t comm, uint32_t a1, uint32_t a2, uint32_t a3) {
     {
       Float f1;
       f1.f = (float)a2;
-      assert(f1.i == a1);
+      if (f1.i != a1) {
+        printf("assertion failed! a1:%x a2:%d f:%x\n", a1, a2, f1.i);
+        assert(0);
+      }
     }
     break;
   default:
@@ -155,7 +161,13 @@ uint32_t faba(uint32_t a, uint32_t b) {
   Float ra, rb, rt;
   ra.i = a;
   rb.i = b;
-  rt.f = fabsf(ra.f + rb.f);
+  if (a == 0) {
+    rt.f = fabsf(rb.f);
+  } else if (b == 0) {
+    rt.f = fabsf(ra.f);
+  } else {
+    rt.f = fabsf(ra.f + rb.f);
+  }
   return rt.i;
 }
 
