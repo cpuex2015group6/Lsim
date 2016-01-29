@@ -28,7 +28,7 @@ uint32_t generic(uint32_t comm, uint32_t a1, uint32_t a2, uint32_t a3) {
     {
       Float f1;
       f1.i = a2;
-      if ((int)f1.f != a1) {
+      if ((int)f1.f != (int)a1) {
         printf("assertion failed! a1:%d a2:%x f:%d\n", a1, a2, (int)f1.f);
         assert(0);
       }
@@ -38,8 +38,8 @@ uint32_t generic(uint32_t comm, uint32_t a1, uint32_t a2, uint32_t a3) {
     // float_of_int
     {
       Float f1;
-      f1.f = (float)((double)a2);
-      if (f1.i != a1) {
+      f1.f = (float)((double)((int)a2));
+      if (f1.i != a1 && f1.i - 1 != a1 && f1.i + 1 != a1) {
         printf("assertion failed! a1:%x a2:%d f:%x\n", a1, a2, f1.i);
         assert(0);
       }
