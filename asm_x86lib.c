@@ -11,6 +11,7 @@ extern uint64_t exec_count[1];
 extern uint64_t generic_count[1];
 extern uint32_t regs[256];
 extern uint32_t *mem_offset[1];
+#define MEM_SIZE (1024*1024)
 
 typedef union {
   uint32_t i;
@@ -48,6 +49,16 @@ uint32_t generic(uint32_t comm, uint32_t a1, uint32_t a2, uint32_t a3) {
   default:
     printf("undefined generic cmd called.\n");
   }
+  return 0;
+}
+
+uint32_t *check(uint32_t *a, uint32_t b) {
+  if (a >= mem_offset[0] && a < mem_offset[0] + MEM_SIZE) {
+    return a;
+  }
+  printf("memcheck failed! tried to access %x at inst_%03X, but mem range is from %x to %x.", (uint32_t)a, b, (uint32_t)mem_offset[0], (uint32_t)(mem_offset[0] + MEM_SIZE));
+  fflush(stdout);
+  // 無理やりセグフォさせる
   return 0;
 }
 
@@ -213,7 +224,7 @@ int main() {
   }
   exec_fifo.i = 0;
   // メモリ空間(SRAM)は4MB
-  mem_offset[0] = malloc(4*1024*1024);
+  mem_offset[0] = malloc(sizeof(uint32_t)*MEM_SIZE);
   printf("registers    : 0x%x\n", (uint32_t)regs);
   printf("memory space : 0x%x\n", (uint32_t)(mem_offset[0]));
   fflush(stdout);

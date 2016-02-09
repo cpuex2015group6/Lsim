@@ -13,14 +13,14 @@
 
 #define INCQ(var) movl $var, %eax; movl (%eax), %ecx; addl $1, %ecx; adcl $0, 4(%eax); movl %ecx, (%eax)
 
-#define LDW(dest, src, offset) movl (src*4+cdecl(regs)), %eax; movl (offset*4+cdecl(regs)), %ebx; addl %ebx, %eax; shll $2, %eax; addl (cdecl(mem_offset)), %eax; movl (%eax), %eax; movl %eax, (dest*4+cdecl(regs));
-#define STW(dest, src, offset) movl (dest*4+cdecl(regs)), %eax; movl (offset*4+cdecl(regs)), %ebx; addl %ebx, %eax; shll $2, %eax; addl (cdecl(mem_offset)), %eax; movl (src*4+cdecl(regs)), %ebx; movl %ebx, (%eax);
+#define LDW(dest, src, offset, cur) movl (src*4+cdecl(regs)), %eax; movl (offset*4+cdecl(regs)), %ebx; addl %ebx, %eax; shll $2, %eax; addl (cdecl(mem_offset)), %eax; movl $##cur, %ebx; CALL(cdecl(check)); movl (%eax), %eax; movl %eax, (dest*4+cdecl(regs));
+#define STW(dest, src, offset, cur) movl (dest*4+cdecl(regs)), %eax; movl (offset*4+cdecl(regs)), %ebx; addl %ebx, %eax; shll $2, %eax; addl (cdecl(mem_offset)), %eax; movl $##cur, %ebx; CALL(cdecl(check)); movl (src*4+cdecl(regs)), %ebx; movl %ebx, (%eax);
 
 #define ADDI(dest, src, imm) movl (src*4+cdecl(regs)), %eax; addl $imm, %eax; movl %eax, (dest*4+cdecl(regs))
 #define SUBI(dest, src, imm) movl (src*4+cdecl(regs)), %eax; subl $imm, %eax; movl %eax, (dest*4+cdecl(regs))
 
-#define LDWI(dest, src, imm) movl (src*4+cdecl(regs)), %eax; addl $imm, %eax; shll $2, %eax; addl (cdecl(mem_offset)), %eax; movl (%eax), %eax; movl %eax, (dest*4+cdecl(regs));
-#define STWI(dest, src, imm) movl (dest*4+cdecl(regs)), %eax; addl $imm, %eax; shll $2, %eax; addl (cdecl(mem_offset)), %eax; movl (src*4+cdecl(regs)), %ebx; movl %ebx, (%eax);
+#define LDWI(dest, src, imm, cur) movl (src*4+cdecl(regs)), %eax; addl $imm, %eax; shll $2, %eax; addl (cdecl(mem_offset)), %eax; movl $##cur, %ebx; CALL(cdecl(check)); movl (%eax), %eax; movl %eax, (dest*4+cdecl(regs));
+#define STWI(dest, src, imm, cur) movl (dest*4+cdecl(regs)), %eax; addl $imm, %eax; shll $2, %eax; addl (cdecl(mem_offset)), %eax; movl $##cur, %ebx; CALL(cdecl(check)); movl (src*4+cdecl(regs)), %ebx; movl %ebx, (%eax);
 
 #define JIC(imm, next, cur) movl %eax, %ecx; movl $imm, %eax; cmpl $1, %ecx; je tmp_label_##cur; jmp inst_##next; tmp_label_##cur: jmp *%eax;
 #define JRC(target, next, cur) movl %eax, %ecx; movl (target*4+cdecl(regs)), %eax; cmpl $1, %ecx; je tmp_label_##cur; jmp inst_##next; tmp_label_##cur: jmp *%eax;

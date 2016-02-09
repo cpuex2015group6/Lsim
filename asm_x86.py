@@ -31,9 +31,9 @@ def convert_op1(inst,instno,reg,imm):
 
 def convert_op2i(inst,instno,reg1,reg2,imm):
     if inst=="stwi":
-        return "STWI({0:d},{1:d},{2:d})".format(reg1, reg2, imm)
+        return "STWI({0:d},{1:d},{2:d},{3:d})".format(reg1, reg2, imm, instno)
     elif inst=="ldwi":
-        return "LDWI({0:d},{1:d},{2:d})".format(reg1, reg2, imm)
+        return "LDWI({0:d},{1:d},{2:d},{3:d})".format(reg1, reg2, imm, instno)
     elif inst=="addi":
         return "ADDI({0:d},{1:d},{2:d})".format(reg1, reg2, imm)
     elif inst=="subi":
@@ -90,9 +90,9 @@ def convert_op3(inst,instno,reg1,reg2,reg3):
     elif inst=="cr":
         return "CR({0:d},{1:d},{2:d},{3:03X},{4:03X})".format(reg1, reg2, reg3, instno+1, instno)
     elif inst=="stw":
-        return "STW({0:d},{1:d},{2:d})".format(reg1, reg2, reg3)
+        return "STW({0:d},{1:d},{2:d},{3:d})".format(reg1, reg2, reg3, instno)
     elif inst=="ldw":
-        return "LDW({0:d},{1:d},{2:d})".format(reg1, reg2, reg3)
+        return "LDW({0:d},{1:d},{2:d},{3:d})".format(reg1, reg2, reg3, instno)
     elif inst in {"add","sub","and","or","xor"}:
         return "movl ({0:d}*4+cdecl(regs)), %eax; {1}l ({2:d}*4+cdecl(regs)), %eax; movl %eax, ({3:d}*4+cdecl(regs))".format(reg2, inst, reg3, reg1)
     elif inst=="sll":
